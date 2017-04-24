@@ -65,6 +65,12 @@ function! winfix#push() abort
   call add(s:stack_bufnrs[s:state.bufnrs], s:state)
 endfunction
 
+function! winfix#_compare(n1, n2) abort
+  let n1 = str2nr(matchstr(a:n1, 'resize \zs\d*$'))
+  let n2 = str2nr(matchstr(a:n2, 'resize \zs\d*$'))
+  return n1 < n2
+endfunction
+
 function! winfix#resize() abort
   if winnr('$') < 2 || len(s:stack) < 2
         \           || s:stack[-2].tabid !=# s:state.tabid
@@ -78,7 +84,8 @@ function! winfix#resize() abort
           \ && (stack[i].width ==# s:state.width
           \ ||  stack[i].height ==# s:state.height)
       if stack[i].winrestcmd !=# s:state.winrestcmd
-        silent! noautocmd execute stack[i].winrestcmd
+        let cmd = join(sort(split(stack[i].winrestcmd, '|'), 'winfix#_compare'), '|')
+        silent! noautocmd execute cmd
       endif
       if stack[i].lines ==# s:state.lines
             \ && (stack[i].tabline !=# s:state.tabline
